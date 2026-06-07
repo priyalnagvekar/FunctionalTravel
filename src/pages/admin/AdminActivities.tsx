@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import {
   Plus, Search, Edit3, Trash2, MapPin, Clock,
-  DollarSign, Star, X, Save, Upload
+  DollarSign, Star, X, Save, Upload, Loader2
 } from 'lucide-react';
+import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 interface Activity {
   id: string;
@@ -17,14 +19,7 @@ interface Activity {
   image: string;
 }
 
-const mockActivities: Activity[] = [
-  { id: '1', name: 'Eiffel Tower Guided Tour', description: 'Skip the line and explore all three levels of the iconic Eiffel Tower with a knowledgeable guide.', category: 'Cultural', location: 'Paris, France', duration: '3 hours', price: '$45', rating: 4.9, status: 'active', image: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce65f4?auto=format&fit=crop&q=80&w=300' },
-  { id: '2', name: 'Bali Sunrise Trek', description: 'Hike to the summit of Mount Batur for a breathtaking sunrise view over the volcanic landscape.', category: 'Adventure', location: 'Bali, Indonesia', duration: '6 hours', price: '$35', rating: 4.8, status: 'active', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=300' },
-  { id: '3', name: 'Tokyo Sushi Masterclass', description: 'Learn to prepare authentic sushi from a trained chef in a traditional Tokyo kitchen.', category: 'Culinary', location: 'Tokyo, Japan', duration: '2 hours', price: '$80', rating: 4.7, status: 'active', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&q=80&w=300' },
-  { id: '4', name: 'Rome Colosseum Night Tour', description: 'Explore the Colosseum after dark with dramatic lighting and fewer crowds.', category: 'Cultural', location: 'Rome, Italy', duration: '2.5 hours', price: '$55', rating: 4.6, status: 'active', image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&q=80&w=300' },
-  { id: '5', name: 'NYC Helicopter Tour', description: 'See Manhattan\'s skyline from above on a thrilling helicopter ride.', category: 'Adventure', location: 'New York, USA', duration: '30 min', price: '$200', rating: 4.9, status: 'inactive', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&q=80&w=300' },
-  { id: '6', name: 'Santorini Wine Tasting', description: 'Visit three local wineries and taste volcanic wines with stunning caldera views.', category: 'Culinary', location: 'Santorini, Greece', duration: '4 hours', price: '$60', rating: 4.5, status: 'active', image: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&q=80&w=300' },
-];
+
 
 const categories = ['All', 'Cultural', 'Adventure', 'Culinary', 'Relaxation'];
 
@@ -34,11 +29,65 @@ const emptyActivity: Omit<Activity, 'id'> = {
 
 export default function AdminActivities() {
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState(emptyActivity);
+  const [formData, setFormData] = useState(emptyActivity as Activity);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
 
-  const filtered = mockActivities.filter(a => {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const fetchActivities = async () => {
+    setLoading(true);
+    try {
+      const querySnapshot = await getDocs(collection(db, 'activities'));
+      const fetched: Activity[] = [];
+      querySnapshot.forEach((docSnap) => {
+        fetched.push({ id: docSnap.id, ...docSnap.data() } as Activity);
+      });
+      
+      setActivities(fetched);
+    } catch (err) {
+      console.error("Failed to fetch activities:", err);
+      setActivities([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  const handleSaveActivity = async () => {
+    setSaving(true);
+    try {
+      if (formData.id) {
+        await setDoc(doc(db, 'activities', formData.id), formData, { merge: true });
+      } else {
+        const newDocRef = doc(collection(db, 'activities'));
+        await setDoc(newDocRef, { ...formData, id: newDocRef.id });
+      }
+      await fetchActivities();
+      setShowForm(false);
+    } catch (err) {
+      console.error("Error saving activity:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteActivity = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this activity?")) return;
+    try {
+      await deleteDoc(doc(db, 'activities', id));
+      await fetchActivities();
+    } catch (err) {
+      console.error("Error deleting activity:", err);
+    }
+  };
+
+  const filtered = activities.filter(a => {
     const matchesSearch = a.name.toLowerCase().includes(searchTerm.toLowerCase()) || a.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = activeCategory === 'All' || a.category === activeCategory;
     return matchesSearch && matchesCategory;
@@ -77,7 +126,11 @@ export default function AdminActivities() {
 
       {/* Activity Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map(activity => (
+        {loading ? (
+          <div className="col-span-full flex justify-center py-12">
+            <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+          </div>
+        ) : filtered.length > 0 ? filtered.map(activity => (
           <div key={activity.id} className="bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition-all overflow-hidden group">
             <div className="h-40 relative overflow-hidden">
               <img src={activity.image} alt={activity.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -106,13 +159,17 @@ export default function AdminActivities() {
                   className="flex-1 py-1.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs font-medium hover:bg-cyan-500/20 transition-all flex items-center justify-center gap-1">
                   <Edit3 className="w-3 h-3" /> Edit
                 </button>
-                <button className="flex-1 py-1.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-medium hover:bg-red-500/20 transition-all flex items-center justify-center gap-1">
+                <button onClick={() => handleDeleteActivity(activity.id)} className="flex-1 py-1.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-medium hover:bg-red-500/20 transition-all flex items-center justify-center gap-1">
                   <Trash2 className="w-3 h-3" /> Delete
                 </button>
               </div>
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="col-span-full text-center text-slate-500 py-8">
+            No activities found.
+          </div>
+        )}
       </div>
 
       {/* Activity Form Modal */}
@@ -182,8 +239,9 @@ export default function AdminActivities() {
               </div>
             </div>
             <div className="flex gap-3 mt-8 pt-6 border-t border-slate-800">
-              <button className="px-6 py-2.5 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-600 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20">
-                <Save className="w-4 h-4" /> Save Activity
+              <button onClick={handleSaveActivity} disabled={saving} className="px-6 py-2.5 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-600 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20 disabled:opacity-50">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} 
+                {saving ? 'Saving...' : 'Save Activity'}
               </button>
               <button onClick={() => setShowForm(false)} className="px-6 py-2.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 text-sm font-medium hover:bg-slate-700 transition-all">
                 Cancel

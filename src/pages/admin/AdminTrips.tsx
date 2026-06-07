@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   Plus, Search, Edit3, Trash2, Eye, Calendar,
-  MapPin, DollarSign, Clock, X, Upload, Save, Loader2
+  MapPin, DollarSign, Clock, X, Upload, Save, Loader2, CheckCircle2, PlayCircle, ArrowUpCircle
 } from 'lucide-react';
-import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
 interface Trip {
@@ -13,7 +13,7 @@ interface Trip {
   startDate: string;
   endDate: string;
   budget: string;
-  status: 'published' | 'draft' | 'archived';
+  status: string;
   description: string;
   itinerary: string;
   included: string;
@@ -22,41 +22,7 @@ interface Trip {
   image: string;
 }
 
-const mockTrips: Trip[] = [
-  {
-    id: '1', title: 'Romantic Paris Getaway', destination: 'Paris, France',
-    startDate: '2026-06-15', endDate: '2026-06-22', budget: '$2,500',
-    status: 'published',
-    description: 'Experience the magic of Paris with curated visits to iconic landmarks, hidden cafes, and romantic Seine cruises.',
-    itinerary: 'Day 1: Arrival & Eiffel Tower\nDay 2: Louvre & Montmartre\nDay 3: Versailles Day Trip\nDay 4: Seine Cruise & Shopping\nDay 5: Free Day',
-    included: 'Hotel (4-star), Airport transfers, Guided tours, Seine cruise tickets',
-    costDetails: 'Hotel: $1,200 | Flights: $800 | Activities: $300 | Food: $200',
-    insights: 'Best visited during spring (April-June). Book Louvre tickets 2 weeks in advance.',
-    image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=300'
-  },
-  {
-    id: '2', title: 'Tokyo Cultural Immersion', destination: 'Tokyo, Japan',
-    startDate: '2026-07-01', endDate: '2026-07-10', budget: '$3,800',
-    status: 'published',
-    description: 'Dive deep into Japanese culture with temple visits, tea ceremonies, and authentic culinary experiences.',
-    itinerary: 'Day 1: Shibuya & Harajuku\nDay 2: Senso-ji & Akihabara\nDay 3: Mt. Fuji Day Trip\nDay 4: Tsukiji Market & Ginza',
-    included: 'Ryokan stay, JR Pass, Guided tours, Tea ceremony',
-    costDetails: 'Accommodation: $1,800 | Flights: $1,200 | Activities: $500 | Food: $300',
-    insights: 'Carry cash — many local shops don\'t accept cards. Get a Suica card for transit.',
-    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=300'
-  },
-  {
-    id: '3', title: 'Bali Wellness Retreat', destination: 'Bali, Indonesia',
-    startDate: '2026-08-10', endDate: '2026-08-17', budget: '$1,800',
-    status: 'draft',
-    description: 'A rejuvenating week of yoga, spa treatments, and exploring Bali\'s stunning rice terraces.',
-    itinerary: 'Day 1: Ubud Arrival\nDay 2: Rice Terraces Trek\nDay 3: Spa & Yoga\nDay 4: Temple Tour',
-    included: 'Villa accommodation, Daily yoga, 3 spa sessions, Scooter rental',
-    costDetails: 'Villa: $700 | Flights: $600 | Activities: $300 | Food: $200',
-    insights: 'Rainy season runs Nov-Mar. Ubud is cooler than the beaches.',
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=300'
-  },
-];
+
 
 const emptyTrip: Omit<Trip, 'id'> = {
   title: '', destination: '', startDate: '', endDate: '', budget: '',
@@ -83,19 +49,10 @@ export default function AdminTrips() {
         fetchedTrips.push({ id: docSnap.id, ...docSnap.data() } as Trip);
       });
       
-      if (fetchedTrips.length === 0) {
-        // Auto-seed mock data
-        for (const trip of mockTrips) {
-          await setDoc(doc(db, 'itineraries', trip.id), trip);
-        }
-        setTrips(mockTrips);
-      } else {
-        setTrips(fetchedTrips);
-      }
+      setTrips(fetchedTrips);
     } catch (err) {
       console.error("Failed to fetch trips:", err);
-      // Fallback to mock data
-      setTrips(mockTrips);
+      setTrips([]);
     } finally {
       setLoading(false);
     }
@@ -143,6 +100,15 @@ export default function AdminTrips() {
     }
   };
 
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      await updateDoc(doc(db, 'itineraries', id), { status: newStatus });
+      await fetchTrips();
+    } catch (err) {
+      console.error('Error updating status:', err);
+    }
+  };
+
   const filtered = trips.filter(t =>
     (t.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (t.destination || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -186,6 +152,9 @@ export default function AdminTrips() {
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <h3 className="text-lg font-bold text-white">{trip.title}</h3>
                   <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                    trip.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                    trip.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                    trip.status === 'Upcoming' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
                     trip.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                     trip.status === 'draft' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
                     'bg-slate-500/10 text-slate-400 border border-slate-600'
@@ -198,13 +167,28 @@ export default function AdminTrips() {
                   <span className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5" /> {trip.budget}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-800 flex-wrap">
                 <button onClick={() => openDetail(trip)} className="px-3 py-1.5 rounded-md bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700 transition-all flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5" /> View
                 </button>
                 <button onClick={() => openForm(trip)} className="px-3 py-1.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs font-medium hover:bg-cyan-500/20 transition-all flex items-center gap-1.5">
                   <Edit3 className="w-3.5 h-3.5" /> Edit
                 </button>
+                {trip.status !== 'Completed' && (
+                  <button onClick={() => handleStatusChange(trip.id, 'Completed')} className="px-3 py-1.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium hover:bg-emerald-500/20 transition-all flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Mark Done
+                  </button>
+                )}
+                {trip.status !== 'Ongoing' && (
+                  <button onClick={() => handleStatusChange(trip.id, 'Ongoing')} className="px-3 py-1.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-medium hover:bg-blue-500/20 transition-all flex items-center gap-1.5">
+                    <PlayCircle className="w-3.5 h-3.5" /> Ongoing
+                  </button>
+                )}
+                {trip.status !== 'Upcoming' && (
+                  <button onClick={() => handleStatusChange(trip.id, 'Upcoming')} className="px-3 py-1.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-medium hover:bg-amber-500/20 transition-all flex items-center gap-1.5">
+                    <ArrowUpCircle className="w-3.5 h-3.5" /> Upcoming
+                  </button>
+                )}
                 <button onClick={() => handleDeleteTrip(trip.id)} className="px-3 py-1.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-medium hover:bg-red-500/20 transition-all flex items-center gap-1.5">
                   <Trash2 className="w-3.5 h-3.5" /> Delete
                 </button>
@@ -250,10 +234,20 @@ export default function AdminTrips() {
               <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{section.content}</p>
             </div>
           ))}
-          <div className="flex gap-3 pt-4 border-t border-slate-800">
+          <div className="flex gap-3 pt-4 border-t border-slate-800 flex-wrap">
             <button onClick={() => openForm(selectedTrip)} className="px-5 py-2.5 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-600 transition-all flex items-center gap-2">
               <Edit3 className="w-4 h-4" /> Edit Trip
             </button>
+            {selectedTrip.status !== 'Completed' && (
+              <button onClick={() => { handleStatusChange(selectedTrip.id, 'Completed'); goBack(); }} className="px-5 py-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm font-medium hover:bg-emerald-500/20 transition-all flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> Mark as Done
+              </button>
+            )}
+            {selectedTrip.status !== 'Ongoing' && (
+              <button onClick={() => { handleStatusChange(selectedTrip.id, 'Ongoing'); goBack(); }} className="px-5 py-2.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-sm font-medium hover:bg-blue-500/20 transition-all flex items-center gap-2">
+                <PlayCircle className="w-4 h-4" /> Mark as Ongoing
+              </button>
+            )}
             <button onClick={() => handleDeleteTrip(selectedTrip.id)} className="px-5 py-2.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 text-sm font-medium hover:bg-red-500/20 transition-all flex items-center gap-2">
               <Trash2 className="w-4 h-4" /> Delete Trip
             </button>
@@ -307,6 +301,9 @@ export default function AdminTrips() {
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Status</label>
                 <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}
                   className="w-full h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 focus:border-cyan-500/50 outline-none transition-all">
+                  <option value="Upcoming">Upcoming</option>
+                  <option value="Ongoing">Ongoing</option>
+                  <option value="Completed">Completed</option>
                   <option value="draft">Draft</option>
                   <option value="published">Published</option>
                   <option value="archived">Archived</option>

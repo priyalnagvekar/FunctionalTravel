@@ -1,0 +1,149 @@
+{
+  "users": {
+    "1": { "id": "1", "name": "Sarah Chen", "email": "sarah.chen@email.com", "city": "San Francisco", "country": "USA", "joinDate": "2025-12-04", "status": "active", "role": "user", "trips": 12, "avatar": "SC" },
+    "2": { "id": "2", "name": "Alex Morgan", "email": "alex.morgan@email.com", "city": "London", "country": "UK", "joinDate": "2026-01-15", "status": "active", "role": "admin", "trips": 8, "avatar": "AM" },
+    "3": { "id": "3", "name": "James Wilson", "email": "james.w@email.com", "city": "Sydney", "country": "Australia", "joinDate": "2026-02-20", "status": "suspended", "role": "user", "trips": 3, "avatar": "JW" },
+    "4": { "id": "4", "name": "Maria Garcia", "email": "maria.g@email.com", "city": "Madrid", "country": "Spain", "joinDate": "2026-03-08", "status": "active", "role": "user", "trips": 15, "avatar": "MG" },
+    "5": { "id": "5", "name": "David Lee", "email": "david.lee@email.com", "city": "Seoul", "country": "South Korea", "joinDate": "2026-01-30", "status": "active", "role": "user", "trips": 6, "avatar": "DL" },
+    "6": { "id": "6", "name": "Emma Brown", "email": "emma.b@email.com", "city": "Toronto", "country": "Canada", "joinDate": "2026-04-12", "status": "active", "role": "user", "trips": 2, "avatar": "EB" },
+    "7": { "id": "7", "name": "Raj Patel", "email": "raj.patel@email.com", "city": "Mumbai", "country": "India", "joinDate": "2026-02-28", "status": "active", "role": "user", "trips": 9, "avatar": "RP" },
+    "8": { "id": "8", "name": "Lisa Tanaka", "email": "lisa.t@email.com", "city": "Tokyo", "country": "Japan", "joinDate": "2026-03-22", "status": "suspended", "role": "user", "trips": 0, "avatar": "LT" }
+  },
+  "activities": {
+    "1": { "id": "1", "name": "Eiffel Tower Guided Tour", "description": "Skip the line and explore all three levels of the iconic Eiffel Tower with a knowledgeable guide.", "category": "Cultural", "location": "Paris, France", "duration": "3 hours", "price": "$45", "rating": 4.9, "status": "active", "image": "https://images.unsplash.com/photo-1511739001486-6bfe10ce65f4?auto=format&fit=crop&q=80&w=300" },
+    "2": { "id": "2", "name": "Bali Sunrise Trek", "description": "Hike to the summit of Mount Batur for a breathtaking sunrise view over the volcanic landscape.", "category": "Adventure", "location": "Bali, Indonesia", "duration": "6 hours", "price": "$35", "rating": 4.8, "status": "active", "image": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=300" },
+    "3": { "id": "3", "name": "Tokyo Sushi Masterclass", "description": "Learn to prepare authentic sushi from a trained chef in a traditional Tokyo kitchen.", "category": "Culinary", "location": "Tokyo, Japan", "duration": "2 hours", "price": "$80", "rating": 4.7, "status": "active", "image": "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&q=80&w=300" },
+    "4": { "id": "4", "name": "Rome Colosseum Night Tour", "description": "Explore the Colosseum after dark with dramatic lighting and fewer crowds.", "category": "Cultural", "location": "Rome, Italy", "duration": "2.5 hours", "price": "$55", "rating": 4.6, "status": "active", "image": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&q=80&w=300" },
+    "5": { "id": "5", "name": "NYC Helicopter Tour", "description": "See Manhattan's skyline from above on a thrilling helicopter ride.", "category": "Adventure", "location": "New York, USA", "duration": "30 min", "price": "$200", "rating": 4.9, "status": "inactive", "image": "https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&q=80&w=300" },
+    "6": { "id": "6", "name": "Santorini Wine Tasting", "description": "Visit three local wineries and taste volcanic wines with stunning caldera views.", "category": "Culinary", "location": "Santorini, Greece", "duration": "4 hours", "price": "$60", "rating": 4.5, "status": "active", "image": "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&q=80&w=300" }
+  },
+  "destinations": {
+    "1": {
+      "id": "1", "name": "Paris", "country": "France", "description": "The City of Light offers world-class art, architecture, and gastronomy.",
+      "featured": true, "visitors": 12480, "rating": 4.9, "image": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=400",
+      "events": [
+        { "id": "e1", "name": "Paris Fashion Week", "date": "2026-09-28", "type": "Cultural", "attendees": 5200 },
+        { "id": "e2", "name": "Bastille Day Festival", "date": "2026-07-14", "type": "Festival", "attendees": 18000 },
+        { "id": "e3", "name": "Nuit Blanche Art Walk", "date": "2026-10-01", "type": "Art", "attendees": 8400 }
+      ],
+      "region": "Europe",
+      "costIndex": "Expensive",
+      "avgDailyCost": 150
+    },
+    "2": {
+      "id": "2", "name": "Tokyo", "country": "Japan", "description": "A vibrant blend of ultra-modern and traditional Japanese culture.",
+      "featured": true, "visitors": 11020, "rating": 4.8, "image": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=400",
+      "events": [
+        { "id": "e4", "name": "Cherry Blossom Viewing", "date": "2026-03-25", "type": "Nature", "attendees": 25000 },
+        { "id": "e5", "name": "Sumo Grand Tournament", "date": "2026-05-10", "type": "Sports", "attendees": 11000 }
+      ],
+      "region": "Asia Pacific",
+      "costIndex": "Expensive",
+      "avgDailyCost": 120
+    },
+    "3": {
+      "id": "3", "name": "Bali", "country": "Indonesia", "description": "Tropical paradise known for rice terraces, temples, and surf beaches.",
+      "featured": false, "visitors": 9860, "rating": 4.7, "image": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=400",
+      "events": [
+        { "id": "e6", "name": "Nyepi Day of Silence", "date": "2026-03-19", "type": "Cultural", "attendees": 3200 },
+        { "id": "e7", "name": "Ubud Writers Festival", "date": "2026-10-15", "type": "Literary", "attendees": 1500 }
+      ],
+      "region": "Asia Pacific",
+      "costIndex": "Budget",
+      "avgDailyCost": 50
+    },
+    "4": {
+      "id": "4", "name": "Rome", "country": "Italy", "description": "The Eternal City where ancient history meets vibrant modern life.",
+      "featured": true, "visitors": 8740, "rating": 4.8, "image": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&q=80&w=400",
+      "events": [
+        { "id": "e8", "name": "Roma Europa Festival", "date": "2026-09-15", "type": "Art", "attendees": 4600 }
+      ],
+      "region": "Europe",
+      "costIndex": "Moderate",
+      "avgDailyCost": 100
+    }
+  },
+  "bookmarks": {
+    "1": { "id": "1", "user": "Sarah Chen", "userEmail": "sarah@email.com", "tripTitle": "Romantic Paris Getaway", "destination": "Paris, France", "savedDate": "2026-05-08", "price": "$2,500", "image": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=300", "avatar": "SC" },
+    "2": { "id": "2", "user": "Alex Morgan", "userEmail": "alex@email.com", "tripTitle": "Tokyo Cultural Immersion", "destination": "Tokyo, Japan", "savedDate": "2026-05-07", "price": "$3,800", "image": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=300", "avatar": "AM" },
+    "3": { "id": "3", "user": "Maria Garcia", "userEmail": "maria@email.com", "tripTitle": "Bali Wellness Retreat", "destination": "Bali, Indonesia", "savedDate": "2026-05-06", "price": "$1,800", "image": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=300", "avatar": "MG" },
+    "4": { "id": "4", "user": "David Lee", "userEmail": "david@email.com", "tripTitle": "Swiss Alps Adventure", "destination": "Switzerland", "savedDate": "2026-05-05", "price": "$4,100", "image": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=300", "avatar": "DL" },
+    "5": { "id": "5", "user": "Emma Brown", "userEmail": "emma@email.com", "tripTitle": "Santorini Romance", "destination": "Santorini, Greece", "savedDate": "2026-05-04", "price": "$3,200", "image": "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&q=80&w=300", "avatar": "EB" },
+    "6": { "id": "6", "user": "Raj Patel", "userEmail": "raj@email.com", "tripTitle": "Maldives Paradise", "destination": "Maldives", "savedDate": "2026-05-03", "price": "$5,500", "image": "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&q=80&w=300", "avatar": "RP" }
+  },
+  "bookings": {
+    "BK-001": { "id": "BK-001", "user": "Sarah Chen", "email": "sarah@email.com", "trip": "Romantic Paris Getaway", "destination": "Paris", "date": "2026-05-08", "amount": "$2,500", "status": "confirmed", "avatar": "SC" },
+    "BK-002": { "id": "BK-002", "user": "Alex Morgan", "email": "alex@email.com", "trip": "Tokyo Cultural Immersion", "destination": "Tokyo", "date": "2026-05-07", "amount": "$3,800", "status": "completed", "avatar": "AM" },
+    "BK-003": { "id": "BK-003", "user": "James Wilson", "email": "james@email.com", "trip": "Bali Wellness Retreat", "destination": "Bali", "date": "2026-05-06", "amount": "$1,800", "status": "pending", "avatar": "JW" },
+    "BK-004": { "id": "BK-004", "user": "Maria Garcia", "email": "maria@email.com", "trip": "Rome Ancient Tour", "destination": "Rome", "date": "2026-05-05", "amount": "$2,200", "status": "confirmed", "avatar": "MG" },
+    "BK-005": { "id": "BK-005", "user": "David Lee", "email": "david@email.com", "trip": "NYC City Explorer", "destination": "New York", "date": "2026-05-04", "amount": "$2,800", "status": "cancelled", "avatar": "DL" },
+    "BK-006": { "id": "BK-006", "user": "Emma Brown", "email": "emma@email.com", "trip": "Santorini Romance", "destination": "Santorini", "date": "2026-05-03", "amount": "$3,200", "status": "confirmed", "avatar": "EB" },
+    "BK-007": { "id": "BK-007", "user": "Raj Patel", "email": "raj@email.com", "trip": "Swiss Alps Adventure", "destination": "Switzerland", "date": "2026-05-02", "amount": "$4,100", "status": "completed", "avatar": "RP" },
+    "BK-008": { "id": "BK-008", "user": "Lisa Tanaka", "email": "lisa@email.com", "trip": "Maldives Paradise", "destination": "Maldives", "date": "2026-05-01", "amount": "$5,500", "status": "pending", "avatar": "LT" }
+  },
+  "itineraries": {
+    "1": {
+      "id": "1", "title": "Romantic Paris Getaway", "destination": "Paris, France",
+      "startDate": "2026-06-15", "endDate": "2026-06-22", "budget": "$2,500",
+      "status": "published",
+      "description": "Experience the magic of Paris with curated visits to iconic landmarks, hidden cafes, and romantic Seine cruises.",
+      "itinerary": "Day 1: Arrival & Eiffel Tower\nDay 2: Louvre & Montmartre\nDay 3: Versailles Day Trip\nDay 4: Seine Cruise & Shopping\nDay 5: Free Day",
+      "included": "Hotel (4-star), Airport transfers, Guided tours, Seine cruise tickets",
+      "costDetails": "Hotel: $1,200 | Flights: $800 | Activities: $300 | Food: $200",
+      "insights": "Best visited during spring (April-June). Book Louvre tickets 2 weeks in advance.",
+      "image": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=300"
+    },
+    "2": {
+      "id": "2", "title": "Tokyo Cultural Immersion", "destination": "Tokyo, Japan",
+      "startDate": "2026-07-01", "endDate": "2026-07-10", "budget": "$3,800",
+      "status": "published",
+      "description": "Dive deep into Japanese culture with temple visits, tea ceremonies, and authentic culinary experiences.",
+      "itinerary": "Day 1: Shibuya & Harajuku\nDay 2: Senso-ji & Akihabara\nDay 3: Mt. Fuji Day Trip\nDay 4: Tsukiji Market & Ginza",
+      "included": "Ryokan stay, JR Pass, Guided tours, Tea ceremony",
+      "costDetails": "Accommodation: $1,800 | Flights: $1,200 | Activities: $500 | Food: $300",
+      "insights": "Carry cash — many local shops don't accept cards. Get a Suica card for transit.",
+      "image": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=300"
+    },
+    "3": {
+      "id": "3", "title": "Bali Wellness Retreat", "destination": "Bali, Indonesia",
+      "startDate": "2026-08-10", "endDate": "2026-08-17", "budget": "$1,800",
+      "status": "draft",
+      "description": "A rejuvenating week of yoga, spa treatments, and exploring Bali's stunning rice terraces.",
+      "itinerary": "Day 1: Ubud Arrival\nDay 2: Rice Terraces Trek\nDay 3: Spa & Yoga\nDay 4: Temple Tour",
+      "included": "Villa accommodation, Daily yoga, 3 spa sessions, Scooter rental",
+      "costDetails": "Villa: $700 | Flights: $600 | Activities: $300 | Food: $200",
+      "insights": "Rainy season runs Nov-Mar. Ubud is cooler than the beaches.",
+      "image": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=300"
+    },
+    "trip_1": {
+      "id": "trip_1",
+      "title": "Summer in Kyoto",
+      "status": "Ongoing",
+      "startDate": "Jul 15, 2026",
+      "endDate": "Jul 28, 2026",
+      "destination": "Kyoto, Japan",
+      "description": "Exploring temples, traditional tea houses, and the bamboo forest in Arashiyama.",
+      "imageUrl": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=600&auto=format&fit=crop",
+      "members": ["A", "J"],
+      "badge": "Day 3 of 14"
+    },
+    "trip_2": {
+      "id": "trip_2",
+      "title": "Swiss Alps Hiking",
+      "status": "Upcoming",
+      "startDate": "Sep 05, 2026",
+      "endDate": "Sep 12, 2026",
+      "destination": "Zermatt, Switzerland",
+      "imageUrl": "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=600&auto=format&fit=crop",
+      "daysAway": "42 Days Away",
+      "tag": "Adventure"
+    },
+    "trip_3": {
+      "id": "trip_3",
+      "title": "Weekend in New York",
+      "status": "Completed",
+      "date": "Dec 10 - Dec 12, 2025",
+      "imageUrl": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=600&auto=format&fit=crop"
+    }
+  }
+}

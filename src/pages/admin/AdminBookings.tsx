@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import {
   Search, MapPin, Eye,
-  ChevronLeft, ChevronRight, Download
+  ChevronLeft, ChevronRight, Download, Loader2
 } from 'lucide-react';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 interface Booking {
   id: string;
@@ -16,16 +18,7 @@ interface Booking {
   avatar: string;
 }
 
-const mockBookings: Booking[] = [
-  { id: 'BK-001', user: 'Sarah Chen', email: 'sarah@email.com', trip: 'Romantic Paris Getaway', destination: 'Paris', date: '2026-05-08', amount: '$2,500', status: 'confirmed', avatar: 'SC' },
-  { id: 'BK-002', user: 'Alex Morgan', email: 'alex@email.com', trip: 'Tokyo Cultural Immersion', destination: 'Tokyo', date: '2026-05-07', amount: '$3,800', status: 'completed', avatar: 'AM' },
-  { id: 'BK-003', user: 'James Wilson', email: 'james@email.com', trip: 'Bali Wellness Retreat', destination: 'Bali', date: '2026-05-06', amount: '$1,800', status: 'pending', avatar: 'JW' },
-  { id: 'BK-004', user: 'Maria Garcia', email: 'maria@email.com', trip: 'Rome Ancient Tour', destination: 'Rome', date: '2026-05-05', amount: '$2,200', status: 'confirmed', avatar: 'MG' },
-  { id: 'BK-005', user: 'David Lee', email: 'david@email.com', trip: 'NYC City Explorer', destination: 'New York', date: '2026-05-04', amount: '$2,800', status: 'cancelled', avatar: 'DL' },
-  { id: 'BK-006', user: 'Emma Brown', email: 'emma@email.com', trip: 'Santorini Romance', destination: 'Santorini', date: '2026-05-03', amount: '$3,200', status: 'confirmed', avatar: 'EB' },
-  { id: 'BK-007', user: 'Raj Patel', email: 'raj@email.com', trip: 'Swiss Alps Adventure', destination: 'Switzerland', date: '2026-05-02', amount: '$4,100', status: 'completed', avatar: 'RP' },
-  { id: 'BK-008', user: 'Lisa Tanaka', email: 'lisa@email.com', trip: 'Maldives Paradise', destination: 'Maldives', date: '2026-05-01', amount: '$5,500', status: 'pending', avatar: 'LT' },
-];
+
 
 const statusColors: Record<string, string> = {
   confirmed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -37,8 +30,31 @@ const statusColors: Record<string, string> = {
 export default function AdminBookings() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = mockBookings.filter(b => {
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'bookings'));
+        const fetched: Booking[] = [];
+        querySnapshot.forEach((docSnap) => {
+          fetched.push({ id: docSnap.id, ...docSnap.data() } as Booking);
+        });
+        
+        setBookings(fetched);
+      } catch (err) {
+        console.error("Failed to fetch bookings:", err);
+        setBookings([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookings();
+  }, []);
+
+  const filtered = bookings.filter(b => {
     const matchesSearch = b.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.trip.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -47,10 +63,10 @@ export default function AdminBookings() {
   });
 
   const stats = {
-    total: mockBookings.length,
-    revenue: '$25,900',
-    confirmed: mockBookings.filter(b => b.status === 'confirmed').length,
-    pending: mockBookings.filter(b => b.status === 'pending').length,
+    total: bookings.length,
+    revenue: '$25,900', // Mocked revenue, could be calculated
+    confirmed: bookings.filter(b => b.status === 'confirmed').length,
+    pending: bookings.filter(b => b.status === 'pending').length,
   };
 
   return (
@@ -114,7 +130,13 @@ export default function AdminBookings() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(b => (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <Loader2 className="w-8 h-8 text-cyan-500 animate-spin mx-auto" />
+                  </td>
+                </tr>
+              ) : filtered.length > 0 ? filtered.map(b => (
                 <tr key={b.id} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
                   <td className="px-6 py-4 text-sm font-mono text-cyan-400">{b.id}</td>
                   <td className="px-6 py-4">
@@ -135,7 +157,7 @@ export default function AdminBookings() {
                   </td>
                   <td className="px-6 py-4 text-sm font-semibold text-white">{b.amount}</td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border capitalize ${statusColors[b.status]}`}>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border capitalize ${statusColors[b.status] || statusColors.pending}`}>
                       {b.status}
                     </span>
                   </td>
@@ -145,12 +167,18 @@ export default function AdminBookings() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500 text-sm">
+                    No bookings found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-800">
-          <p className="text-sm text-slate-500">Showing {filtered.length} of {mockBookings.length} bookings</p>
+          <p className="text-sm text-slate-500">Showing {filtered.length} of {bookings.length} bookings</p>
           <div className="flex gap-1">
             <button className="w-8 h-8 rounded-md flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-800 transition-all">
               <ChevronLeft className="w-4 h-4" />

@@ -1,12 +1,96 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, SlidersHorizontal, ArrowUpDown, 
   Image as ImageIcon, MapPin, Globe, Heart, 
-  MessageCircle, Share2, Users 
+  MessageCircle, Share2, Users, Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ref, onValue, push, set, serverTimestamp } from 'firebase/database';
+import { rtdb } from '../firebase';
+
+interface Post {
+  id: string;
+  authorName: string;
+  authorAvatar: string;
+  location: string;
+  content: string;
+  tags: string[];
+  imageUrl?: string;
+  likes: number;
+  comments: number;
+  createdAt: number;
+}
 
 export default function Community() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
+
+  useEffect(() => {
+    const postsRef = ref(rtdb, 'community_posts');
+    const unsubscribe = onValue(postsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const postsList = Object.entries(data).map(([id, value]: [string, any]) => ({
+          id,
+          ...value
+        })).sort((a, b) => b.createdAt - a.createdAt);
+        setPosts(postsList);
+      } else {
+        setPosts([]);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handlePost = async () => {
+    if (!newPostContent.trim()) return;
+    setIsPosting(true);
+    try {
+      const postsRef = ref(rtdb, 'community_posts');
+      const newPostRef = push(postsRef);
+      await set(newPostRef, {
+        authorName: 'Current User', // Mock user
+        authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=256&q=80',
+        location: 'Earth',
+        content: newPostContent,
+        tags: [],
+        likes: 0,
+        comments: 0,
+        createdAt: serverTimestamp(),
+      });
+      setNewPostContent('');
+    } catch (error) {
+      console.error('Error adding post: ', error);
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
+  const handleLike = async (post: Post) => {
+    const postRef = ref(rtdb, `community_posts/${post.id}/likes`);
+    await set(postRef, post.likes + 1);
+  };
+
+  const timeAgo = (timestamp: number) => {
+    if (!timestamp) return 'Just now';
+    const seconds = Math.floor((new Date().getTime() - timestamp) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + ' years ago';
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + ' months ago';
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + ' days ago';
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + ' hours ago';
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + ' minutes ago';
+    return Math.floor(seconds) + ' seconds ago';
+  };
+
   return (
     <>
       
@@ -60,6 +144,8 @@ export default function Community() {
                 </div>
                 <div className="flex-grow">
                   <textarea 
+                    value={newPostContent}
+                    onChange={(e) => setNewPostContent(e.target.value)}
                     placeholder="Share your latest travel story..."
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 mb-3 focus:outline-none focus:ring-2 focus:ring-[#65a30d]/50 focus:border-[#65a30d] text-gray-900 resize-none h-24 placeholder-gray-400 text-[15px]" 
                   />
@@ -72,8 +158,12 @@ export default function Community() {
                         <MapPin className="w-5 h-5" />
                       </button>
                     </div>
-                    <button className="bg-[#65a30d] text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#4d7c0f] transition-colors shadow-sm">
-                      Post
+                    <button 
+                      onClick={handlePost}
+                      disabled={isPosting || !newPostContent.trim()}
+                      className="bg-[#65a30d] text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#4d7c0f] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Post'}
                     </button>
                   </div>
                 </div>
@@ -81,91 +171,75 @@ export default function Community() {
             </div>
 
             {/* Feed Posts */}
-            
-            {/* Post 1 */}
-            <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-6 pb-4 flex gap-4 items-center">
-                <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-gray-100">
-                  <img 
-                    src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=256&q=80" 
-                    alt="Sarah Jenkins" 
-                    className="w-full h-full object-cover" 
-                  />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Sarah Jenkins</h3>
-                  <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5 font-medium">
-                    <Globe className="w-3.5 h-3.5" /> 
-                    2 hours ago in <a href="#" className="text-[#65a30d] hover:underline">Kyoto, Japan</a>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-8 h-8 text-[#65a30d] animate-spin" />
+              </div>
+            ) : posts.length > 0 ? (
+              posts.map((post) => (
+                <article key={post.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="p-6 pb-4 flex gap-4 items-center">
+                    <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-gray-100">
+                      <img 
+                        src={post.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.authorName)}&background=random`} 
+                        alt={post.authorName} 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">{post.authorName}</h3>
+                      <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5 font-medium">
+                        <Globe className="w-3.5 h-3.5" /> 
+                        {timeAgo(post.createdAt)} in <a href="#" className="text-[#65a30d] hover:underline">{post.location}</a>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              
-              <div className="px-6 pb-4 text-gray-700 text-[15px] leading-relaxed">
-                <p className="mb-4">
-                  Just finished an incredible 3-day itinerary through Kyoto's historic districts. The bamboo forest at Arashiyama was breathtaking early in the morning before the crowds arrived. Highly recommend grabbing a matcha soft serve near the entrance!
-                </p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="px-3 py-1 bg-[#ecfccb] text-[#4d7c0f] rounded-full text-xs font-semibold">Culture</span>
-                  <span className="px-3 py-1 bg-[#ecfccb] text-[#4d7c0f] rounded-full text-xs font-semibold">Photography</span>
-                </div>
-              </div>
-              
-              <div className="w-full h-64 sm:h-96 overflow-hidden bg-gray-100">
-                <img 
-                  src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80" 
-                  alt="Kyoto Bamboo Forest" 
-                  className="w-full h-full object-cover" 
-                />
-              </div>
-              
-              <div className="px-6 py-4 flex justify-between items-center">
-                <div className="flex gap-6">
-                  <button className="flex items-center gap-1.5 text-gray-500 hover:text-red-500 transition-colors font-medium text-sm">
-                    <Heart className="w-5 h-5" /> 124
-                  </button>
-                  <button className="flex items-center gap-1.5 text-gray-500 hover:text-[#65a30d] transition-colors font-medium text-sm">
-                    <MessageCircle className="w-5 h-5" /> 18
-                  </button>
-                </div>
-                <button className="text-gray-400 hover:text-gray-900 transition-colors">
-                  <Share2 className="w-5 h-5" />
-                </button>
-              </div>
-            </article>
-
-            {/* Post 2 */}
-            <article className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <div className="flex gap-4 items-center mb-4">
-                <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl border border-blue-200">
-                  M
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Marcus Chen</h3>
-                  <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5 font-medium">
-                    <Globe className="w-3.5 h-3.5" /> 
-                    5 hours ago in <a href="#" className="text-[#65a30d] hover:underline">Swiss Alps</a>
+                  
+                  <div className="px-6 pb-4 text-gray-700 text-[15px] leading-relaxed">
+                    <p className={post.tags?.length ? 'mb-4' : ''}>
+                      {post.content}
+                    </p>
+                    {post.tags && post.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        {post.tags.map(tag => (
+                          <span key={tag} className="px-3 py-1 bg-[#ecfccb] text-[#4d7c0f] rounded-full text-xs font-semibold">{tag}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
+                  
+                  {post.imageUrl && (
+                    <div className="w-full h-64 sm:h-96 overflow-hidden bg-gray-100">
+                      <img 
+                        src={post.imageUrl} 
+                        alt="Post Image" 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                  )}
+                  
+                  <div className={`px-6 py-4 flex justify-between items-center ${!post.imageUrl && 'border-t border-gray-100'}`}>
+                    <div className="flex gap-6">
+                      <button onClick={() => handleLike(post)} className="flex items-center gap-1.5 text-gray-500 hover:text-red-500 transition-colors font-medium text-sm">
+                        <Heart className="w-5 h-5" /> {post.likes}
+                      </button>
+                      <button className="flex items-center gap-1.5 text-gray-500 hover:text-[#65a30d] transition-colors font-medium text-sm">
+                        <MessageCircle className="w-5 h-5" /> {post.comments} Responses
+                      </button>
+                    </div>
+                    <button className="text-gray-400 hover:text-gray-900 transition-colors">
+                      <Share2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
+                <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-gray-900 mb-2">No posts yet</h3>
+                <p className="text-gray-500">Be the first to share your travel experience!</p>
               </div>
-              
-              <div className="text-gray-700 text-[15px] leading-relaxed mb-6">
-                <p>
-                  Looking for recommendations on intermediate hiking trails near Zermatt. We have 4 days next month. Ideally looking for routes with great views of the Matterhorn but avoiding the most crowded paths. Any hidden gems?
-                </p>
-              </div>
-              
-              <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                <div className="flex gap-6">
-                  <button className="flex items-center gap-1.5 text-gray-500 hover:text-red-500 transition-colors font-medium text-sm">
-                    <Heart className="w-5 h-5" /> 12
-                  </button>
-                  <button className="flex items-center gap-1.5 text-gray-500 hover:text-[#65a30d] transition-colors font-medium text-sm">
-                    <MessageCircle className="w-5 h-5" /> 8 Responses
-                  </button>
-                </div>
-              </div>
-            </article>
+            )}
 
           </div>
 

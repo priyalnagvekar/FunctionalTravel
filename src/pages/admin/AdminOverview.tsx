@@ -1,35 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users, PlaneTakeoff, DollarSign, TrendingUp,
   ArrowUpRight, ArrowDownRight, Eye, Plus,
-  MapPin, Clock, Star, Activity
+  MapPin, Clock, Star, Activity, Database, Loader2, CheckCircle2, AlertTriangle
 } from 'lucide-react';
-
-const kpiCards = [
-  { label: 'Total Users', value: '24,592', change: '+12.5%', up: true, icon: Users, color: 'cyan' },
-  { label: 'Active Trips', value: '3,410', change: '+8.2%', up: true, icon: PlaneTakeoff, color: 'violet' },
-  { label: 'Revenue (YTD)', value: '$1.2M', change: '+24.1%', up: true, icon: DollarSign, color: 'emerald' },
-  { label: 'Conversion Rate', value: '6.8%', change: '-1.2%', up: false, icon: TrendingUp, color: 'amber' },
-];
-
-const recentActivities = [
-  { user: 'Sarah Chen', action: 'booked a trip to', target: 'Bali, Indonesia', time: '2 min ago', avatar: 'S' },
-  { user: 'Alex Morgan', action: 'registered a new account', target: '', time: '8 min ago', avatar: 'A' },
-  { user: 'James Wilson', action: 'left a review for', target: 'Tokyo Tour', time: '15 min ago', avatar: 'J' },
-  { user: 'Maria Garcia', action: 'updated itinerary for', target: 'Paris Trip', time: '22 min ago', avatar: 'M' },
-  { user: 'David Lee', action: 'booked a trip to', target: 'Rome, Italy', time: '30 min ago', avatar: 'D' },
-  { user: 'Emma Brown', action: 'cancelled booking for', target: 'NYC Getaway', time: '45 min ago', avatar: 'E' },
-];
-
-const topDestinations = [
-  { name: 'Paris, France', bookings: 1248, rating: 4.9, trend: '+15%' },
-  { name: 'Tokyo, Japan', bookings: 1102, rating: 4.8, trend: '+22%' },
-  { name: 'Bali, Indonesia', bookings: 986, rating: 4.7, trend: '+8%' },
-  { name: 'Rome, Italy', bookings: 874, rating: 4.8, trend: '+12%' },
-  { name: 'New York, USA', bookings: 762, rating: 4.6, trend: '+5%' },
-];
+import { useNavigate } from 'react-router-dom';
+import { seedAllCollections, getCollectionStats, SeedResult } from '../../utils/seedData';
 
 export default function AdminOverview() {
+  const navigate = useNavigate();
+  const [stats, setStats] = useState<Record<string, number>>({});
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [seeding, setSeeding] = useState(false);
+  const [seedProgress, setSeedProgress] = useState('');
+  const [seedResults, setSeedResults] = useState<SeedResult[] | null>(null);
+  const [seedError, setSeedError] = useState('');
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    setLoadingStats(true);
+    try {
+      const s = await getCollectionStats();
+      setStats(s);
+    } catch (err) {
+      console.error('Failed to load stats:', err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  const handleSeedData = async () => {
+    if (!window.confirm('This will add sample data to your Firestore database. Existing documents with the same IDs will be overwritten. Continue?')) return;
+    setSeeding(true);
+    setSeedResults(null);
+    setSeedError('');
+    try {
+      const results = await seedAllCollections((msg) => setSeedProgress(msg));
+      setSeedResults(results);
+      setSeedProgress('');
+      await loadStats();
+    } catch (err: any) {
+      console.error('Seed failed:', err);
+      setSeedError(err.message || 'Failed to seed data');
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  const totalDocs = Object.values(stats).reduce((a, b) => a + b, 0);
+  const isEmpty = totalDocs === 0;
+
+  const kpiCards = [
+    { label: 'Total Users', value: loadingStats ? '...' : String(stats.users || 0), icon: Users, color: 'cyan' },
+    { label: 'Active Trips', value: loadingStats ? '...' : String(stats.itineraries || 0), icon: PlaneTakeoff, color: 'violet' },
+    { label: 'Destinations', value: loadingStats ? '...' : String(stats.destinations || 0), icon: MapPin, color: 'emerald' },
+    { label: 'Activities', value: loadingStats ? '...' : String(stats.activities || 0), icon: Activity, color: 'amber' },
+  ];
+
+  const recentActivities = [
+    { user: 'Sarah Chen', action: 'booked a trip to', target: 'Bali, Indonesia', time: '2 min ago', avatar: 'S' },
+    { user: 'Alex Morgan', action: 'registered a new account', target: '', time: '8 min ago', avatar: 'A' },
+    { user: 'James Wilson', action: 'left a review for', target: 'Tokyo Tour', time: '15 min ago', avatar: 'J' },
+    { user: 'Maria Garcia', action: 'updated itinerary for', target: 'Paris Trip', time: '22 min ago', avatar: 'M' },
+    { user: 'David Lee', action: 'booked a trip to', target: 'Rome, Italy', time: '30 min ago', avatar: 'D' },
+    { user: 'Emma Brown', action: 'cancelled booking for', target: 'NYC Getaway', time: '45 min ago', avatar: 'E' },
+  ];
+
+  const topDestinations = [
+    { name: 'Paris, France', bookings: 1248, rating: 4.9, trend: '+15%' },
+    { name: 'Tokyo, Japan', bookings: 1102, rating: 4.8, trend: '+22%' },
+    { name: 'Bali, Indonesia', bookings: 986, rating: 4.7, trend: '+8%' },
+    { name: 'Rome, Italy', bookings: 874, rating: 4.8, trend: '+12%' },
+    { name: 'New York, USA', bookings: 762, rating: 4.6, trend: '+5%' },
+  ];
+
   return (
     <div className="space-y-8">
       {/* Page Header */}
@@ -39,12 +86,89 @@ export default function AdminOverview() {
           <p className="text-slate-400 mt-1">Welcome back! Here's what's happening with your platform.</p>
         </div>
         <div className="flex gap-3">
-          <button className="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-700 transition-all flex items-center gap-2">
+          <button onClick={() => navigate('/')} className="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-700 transition-all flex items-center gap-2">
             <Eye className="w-4 h-4" /> View Site
           </button>
-          <button className="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-600 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+          <button onClick={() => navigate('/admin/trips')} className="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-600 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20">
             <Plus className="w-4 h-4" /> New Trip
           </button>
+        </div>
+      </div>
+
+      {/* Seed Data Card — prominent when database is empty */}
+      <div className={`rounded-2xl border overflow-hidden transition-all ${
+        isEmpty && !loadingStats
+          ? 'bg-gradient-to-r from-cyan-950/50 via-slate-900 to-violet-950/50 border-cyan-500/30 ring-1 ring-cyan-500/10'
+          : 'bg-slate-900 border-slate-800'
+      }`}>
+        <div className="p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                isEmpty && !loadingStats
+                  ? 'bg-cyan-500/20 text-cyan-400'
+                  : 'bg-slate-800 text-slate-400'
+              }`}>
+                <Database className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Database Seeder</h3>
+                <p className="text-sm text-slate-400 mt-0.5">
+                  {isEmpty && !loadingStats
+                    ? 'Your database is empty. Seed it with sample data to get started, or add content manually from each admin section.'
+                    : `${totalDocs} documents across ${Object.keys(stats).length} collections.`}
+                </p>
+                {/* Collection breakdown */}
+                {!loadingStats && totalDocs > 0 && (
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {Object.entries(stats).map(([name, count]) => (
+                      <span key={name} className="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full border border-slate-700 capitalize">
+                        {name}: <strong className="text-white">{count}</strong>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={handleSeedData}
+              disabled={seeding}
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 flex-shrink-0 ${
+                isEmpty && !loadingStats
+                  ? 'bg-gradient-to-r from-cyan-500 to-violet-500 text-white hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] shadow-lg shadow-cyan-500/20'
+                  : 'bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700'
+              } disabled:opacity-50`}
+            >
+              {seeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+              {seeding ? seedProgress || 'Seeding...' : isEmpty && !loadingStats ? 'Seed Database Now' : 'Re-seed Data'}
+            </button>
+          </div>
+
+          {/* Seed Results */}
+          {seedResults && (
+            <div className="mt-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm font-semibold text-emerald-400">Seeding complete!</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                {seedResults.map(r => (
+                  <div key={r.collection} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                    <p className="text-xs text-slate-400 capitalize">{r.collection}</p>
+                    <p className="text-lg font-bold text-white">{r.existing}</p>
+                    <p className="text-[10px] text-emerald-400">+{r.seeded} seeded</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {seedError && (
+            <div className="mt-4 pt-4 border-t border-slate-800 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-400" />
+              <span className="text-sm text-red-400">{seedError}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -58,7 +182,7 @@ export default function AdminOverview() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards — now dynamic */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi) => (
           <div key={kpi.label} className="bg-slate-900 rounded-xl p-5 border border-slate-800 hover:border-slate-700 transition-all group">
@@ -71,10 +195,6 @@ export default function AdminOverview() {
               }`}>
                 <kpi.icon className="w-5 h-5" />
               </div>
-              <span className={`text-xs font-semibold flex items-center gap-0.5 ${kpi.up ? 'text-emerald-400' : 'text-red-400'}`}>
-                {kpi.change}
-                {kpi.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-              </span>
             </div>
             <p className="text-slate-400 text-sm">{kpi.label}</p>
             <h3 className="text-2xl font-bold text-white mt-0.5">{kpi.value}</h3>
@@ -104,15 +224,11 @@ export default function AdminOverview() {
                   <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              {/* Grid lines */}
               {[40, 80, 120, 160].map((y) => (
                 <line key={y} x1="0" y1={y} x2="600" y2={y} stroke="#1e293b" strokeWidth="1" />
               ))}
-              {/* Area */}
               <path d="M0,160 L60,140 L120,120 L180,130 L240,90 L300,100 L360,60 L420,70 L480,40 L540,50 L600,20 L600,200 L0,200 Z" fill="url(#chartGrad)" />
-              {/* Line */}
               <path d="M0,160 L60,140 L120,120 L180,130 L240,90 L300,100 L360,60 L420,70 L480,40 L540,50 L600,20" fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              {/* Dots */}
               {[[0,160],[60,140],[120,120],[180,130],[240,90],[300,100],[360,60],[420,70],[480,40],[540,50],[600,20]].map(([x,y], i) => (
                 <circle key={i} cx={x} cy={y} r="4" fill="#0f172a" stroke="#06b6d4" strokeWidth="2" />
               ))}
@@ -138,7 +254,7 @@ export default function AdminOverview() {
                 <circle cx="50" cy="50" r="40" fill="none" stroke="#10b981" strokeWidth="20" strokeDasharray="37.70 251.33" strokeDashoffset="-213.63" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-white">8.4K</span>
+                <span className="text-2xl font-bold text-white">{stats.activities || 0}</span>
                 <span className="text-xs text-slate-400">Total</span>
               </div>
             </div>
@@ -197,7 +313,7 @@ export default function AdminOverview() {
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <MapPin className="w-5 h-5 text-violet-400" /> Top Destinations
             </h3>
-            <button className="text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">View All</button>
+            <button onClick={() => navigate('/admin/destinations')} className="text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors">View All</button>
           </div>
           <div className="space-y-3">
             {topDestinations.map((dest, i) => (

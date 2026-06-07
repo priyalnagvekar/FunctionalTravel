@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { 
   List, Calendar as CalendarIcon, Search, ChevronDown, Filter, ArrowUpDown,
   MapPin, PlaneLanding, Bed, Building, ArrowDown, Mountain, Utensils,
-  Clock, FileText, Share2
+  Clock, FileText, Share2, CheckSquare, StickyNote, Plus, DollarSign, Plane, Bed as BedIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-type ViewMode = 'list' | 'calendar';
+type ViewMode = 'list' | 'calendar' | 'checklist' | 'notes' | 'timeline' | 'budget';
 
 // Mock data for both views
 const itineraryData = {
@@ -94,6 +94,21 @@ itineraryData.days.forEach(d => {
 
 export default function ItineraryView() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [checkItems, setCheckItems] = useState([
+    { id: '1', label: 'Passport', checked: true },
+    { id: '2', label: 'Flight Tickets', checked: true },
+    { id: '3', label: 'Hotel Confirmation', checked: false },
+    { id: '4', label: 'Travel Insurance', checked: true },
+    { id: '5', label: 'Phone Charger', checked: false },
+    { id: '6', label: 'Comfortable Shoes', checked: false },
+    { id: '7', label: 'Sunscreen', checked: false },
+    { id: '8', label: 'Camera', checked: false },
+  ]);
+  const [notes, setNotes] = useState([
+    { id: '1', text: 'Remember to exchange currency at the airport.', time: '2 hours ago' },
+    { id: '2', text: 'Hotel checkout is at 11 AM on the last day.', time: '1 day ago' },
+  ]);
+  const [newNote, setNewNote] = useState('');
 
   return (
     <>
@@ -120,18 +135,18 @@ export default function ItineraryView() {
             >
               <CalendarIcon className="w-5 h-5" /> Calendar
             </button>
-            <Link to="/packing" className="flex items-center gap-2 px-4 py-1.5 rounded-md text-gray-500 hover:bg-black/5 transition-colors font-semibold text-sm">
-              <List className="w-5 h-5" /> Checklist
-            </Link>
-            <Link to="/notes" className="flex items-center gap-2 px-4 py-1.5 rounded-md text-gray-500 hover:bg-black/5 transition-colors font-semibold text-sm">
-              <FileText className="w-5 h-5" /> Notes
-            </Link>
-            <Link to="/timeline" className="flex items-center gap-2 px-4 py-1.5 rounded-md text-gray-500 hover:bg-black/5 transition-colors font-semibold text-sm">
+            <button onClick={() => setViewMode('checklist')} className={`flex items-center gap-2 px-4 py-1.5 rounded-md font-semibold text-sm transition-all ${viewMode === 'checklist' ? 'bg-white text-[#65a30d] shadow-sm' : 'text-gray-500 hover:bg-black/5'}`}>
+              <CheckSquare className="w-5 h-5" /> Checklist
+            </button>
+            <button onClick={() => setViewMode('notes')} className={`flex items-center gap-2 px-4 py-1.5 rounded-md font-semibold text-sm transition-all ${viewMode === 'notes' ? 'bg-white text-[#65a30d] shadow-sm' : 'text-gray-500 hover:bg-black/5'}`}>
+              <StickyNote className="w-5 h-5" /> Notes
+            </button>
+            <button onClick={() => setViewMode('timeline')} className={`flex items-center gap-2 px-4 py-1.5 rounded-md font-semibold text-sm transition-all ${viewMode === 'timeline' ? 'bg-white text-[#65a30d] shadow-sm' : 'text-gray-500 hover:bg-black/5'}`}>
               <CalendarIcon className="w-5 h-5" /> Timeline
-            </Link>
-            <Link to="/invoice" className="flex items-center gap-2 px-4 py-1.5 rounded-md text-gray-500 hover:bg-black/5 transition-colors font-semibold text-sm">
-              <List className="w-5 h-5" /> Budget
-            </Link>
+            </button>
+            <button onClick={() => setViewMode('budget')} className={`flex items-center gap-2 px-4 py-1.5 rounded-md font-semibold text-sm transition-all ${viewMode === 'budget' ? 'bg-white text-[#65a30d] shadow-sm' : 'text-gray-500 hover:bg-black/5'}`}>
+              <DollarSign className="w-5 h-5" /> Budget
+            </button>
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
@@ -326,6 +341,127 @@ export default function ItineraryView() {
             </div>
           </div>
         )}
+
+        {/* ===================== CHECKLIST TAB ===================== */}
+        {viewMode === 'checklist' && (
+          <div className="w-full space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Packing Checklist</h2>
+              <span className="text-sm text-gray-500 font-medium">{checkItems.filter(i => i.checked).length}/{checkItems.length} packed</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div className="bg-[#65a30d] h-full rounded-full transition-all" style={{ width: `${(checkItems.filter(i => i.checked).length / checkItems.length) * 100}%` }} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {checkItems.map(item => (
+                <label key={item.id} onClick={() => setCheckItems(checkItems.map(c => c.id === item.id ? {...c, checked: !c.checked} : c))} className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 cursor-pointer hover:border-[#65a30d]/30 transition-all">
+                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${item.checked ? 'bg-[#65a30d] border-[#65a30d]' : 'border-gray-300'}`}>
+                    {item.checked && <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>}
+                  </div>
+                  <span className={`text-sm font-medium ${item.checked ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{item.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ===================== NOTES TAB ===================== */}
+        {viewMode === 'notes' && (
+          <div className="w-full space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900">Trip Notes</h2>
+            <div className="flex gap-3">
+              <input type="text" value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add a note..." className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:border-[#65a30d] focus:ring-1 focus:ring-[#65a30d] outline-none text-sm" />
+              <button onClick={() => { if (newNote.trim()) { setNotes([{ id: Date.now().toString(), text: newNote, time: 'Just now' }, ...notes]); setNewNote(''); }}} className="px-5 py-3 bg-[#65a30d] text-white rounded-xl font-semibold text-sm hover:bg-[#4d7c0f] transition-colors flex items-center gap-2">
+                <Plus className="w-4 h-4" /> Add
+              </button>
+            </div>
+            <div className="space-y-3">
+              {notes.map(note => (
+                <div key={note.id} className="p-4 bg-white rounded-xl border border-gray-200 flex justify-between items-start gap-4">
+                  <p className="text-sm text-gray-700">{note.text}</p>
+                  <span className="text-xs text-gray-400 flex-shrink-0">{note.time}</span>
+                </div>
+              ))}
+              {notes.length === 0 && <p className="text-center text-gray-400 py-8">No notes yet. Add one above!</p>}
+            </div>
+          </div>
+        )}
+
+        {/* ===================== TIMELINE TAB ===================== */}
+        {viewMode === 'timeline' && (
+          <div className="w-full space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900">Trip Timeline</h2>
+            <div className="relative pl-8">
+              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-[#65a30d]/20" />
+              {itineraryData.days.map(day => (
+                <div key={day.day} className="relative mb-8">
+                  <div className="absolute -left-5 top-1 w-4 h-4 rounded-full bg-[#65a30d] border-2 border-white shadow-sm" />
+                  <div className="ml-4">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">Day {day.day} — {day.dateLabel}</h3>
+                    <div className="space-y-2 mt-3">
+                      {day.activities.map((act, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100">
+                          <span className="text-xs text-gray-400 font-semibold w-16 flex-shrink-0">{act.time}</span>
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${act.iconBg}`}><act.icon className="w-4 h-4" /></div>
+                          <div><p className="text-sm font-semibold text-gray-900">{act.title}</p><p className="text-xs text-gray-500">{act.desc}</p></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ===================== BUDGET TAB ===================== */}
+        {viewMode === 'budget' && (() => {
+          const allCosts = itineraryData.days.flatMap(d => d.activities.map(a => ({ name: a.title, cost: a.cost, type: a.type })));
+          const total = allCosts.reduce((s, c) => s + c.cost, 0);
+          const byType: Record<string, number> = {};
+          allCosts.forEach(c => { byType[c.type] = (byType[c.type] || 0) + c.cost; });
+          return (
+            <div className="w-full space-y-6">
+              <h2 className="text-2xl font-bold text-gray-900">Budget Breakdown</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <p className="text-sm text-gray-500">Total Expenses</p>
+                  <p className="text-3xl font-bold text-[#65a30d] mt-1">${total.toFixed(2)}</p>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <p className="text-sm text-gray-500">Activities</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">{allCosts.length}</p>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <p className="text-sm text-gray-500">Avg. per Day</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">${(total / itineraryData.days.length).toFixed(2)}</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">By Category</h3>
+                <div className="space-y-3">
+                  {Object.entries(byType).map(([type, cost]) => (
+                    <div key={type}>
+                      <div className="flex justify-between text-sm mb-1"><span className="font-medium text-gray-700">{type}</span><span className="font-bold text-gray-900">${cost.toFixed(2)}</span></div>
+                      <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden"><div className="bg-[#65a30d] h-full rounded-full" style={{ width: `${(cost / total) * 100}%` }} /></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">All Expenses</h3>
+                <div className="space-y-2">
+                  {allCosts.filter(c => c.cost > 0).map((c, i) => (
+                    <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <div><p className="text-sm font-semibold text-gray-900">{c.name}</p><p className="text-xs text-gray-500">{c.type}</p></div>
+                      <span className="text-sm font-bold text-[#65a30d]">${c.cost.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       </main>
     </>

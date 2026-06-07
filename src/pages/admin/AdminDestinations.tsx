@@ -26,49 +26,19 @@ interface Event {
   attendees: number;
 }
 
-const mockDestinations: Destination[] = [
-  {
-    id: '1', name: 'Paris', country: 'France', description: 'The City of Light offers world-class art, architecture, and gastronomy.',
-    featured: true, visitors: 12480, rating: 4.9, image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=400',
-    events: [
-      { id: 'e1', name: 'Paris Fashion Week', date: '2026-09-28', type: 'Cultural', attendees: 5200 },
-      { id: 'e2', name: 'Bastille Day Festival', date: '2026-07-14', type: 'Festival', attendees: 18000 },
-      { id: 'e3', name: 'Nuit Blanche Art Walk', date: '2026-10-01', type: 'Art', attendees: 8400 },
-    ]
-  },
-  {
-    id: '2', name: 'Tokyo', country: 'Japan', description: 'A vibrant blend of ultra-modern and traditional Japanese culture.',
-    featured: true, visitors: 11020, rating: 4.8, image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=400',
-    events: [
-      { id: 'e4', name: 'Cherry Blossom Viewing', date: '2026-03-25', type: 'Nature', attendees: 25000 },
-      { id: 'e5', name: 'Sumo Grand Tournament', date: '2026-05-10', type: 'Sports', attendees: 11000 },
-    ]
-  },
-  {
-    id: '3', name: 'Bali', country: 'Indonesia', description: 'Tropical paradise known for rice terraces, temples, and surf beaches.',
-    featured: false, visitors: 9860, rating: 4.7, image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=400',
-    events: [
-      { id: 'e6', name: 'Nyepi Day of Silence', date: '2026-03-19', type: 'Cultural', attendees: 3200 },
-      { id: 'e7', name: 'Ubud Writers Festival', date: '2026-10-15', type: 'Literary', attendees: 1500 },
-    ]
-  },
-  {
-    id: '4', name: 'Rome', country: 'Italy', description: 'The Eternal City where ancient history meets vibrant modern life.',
-    featured: true, visitors: 8740, rating: 4.8, image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&q=80&w=400',
-    events: [
-      { id: 'e8', name: 'Roma Europa Festival', date: '2026-09-15', type: 'Art', attendees: 4600 },
-    ]
-  },
-];
+
 
 export default function AdminDestinations() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [selectedDest, setSelectedDest] = useState<Destination | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newDest, setNewDest] = useState<Partial<Destination>>({
+    name: '', country: '', description: '', featured: false, visitors: 0, rating: 5.0, image: '', events: []
+  });
 
-  useEffect(() => {
-    const fetchDestinations = async () => {
+  const fetchDestinations = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, 'destinations'));
         const fetchedDests: Destination[] = [];
@@ -76,22 +46,35 @@ export default function AdminDestinations() {
           fetchedDests.push({ id: docSnap.id, ...docSnap.data() } as Destination);
         });
 
-        if (fetchedDests.length === 0) {
-          // Seed the database with mock data if it's empty
-          for (const dest of mockDestinations) {
-            await setDoc(doc(db, 'destinations', dest.id), dest);
-            fetchedDests.push(dest);
-          }
-        }
         setDestinations(fetchedDests);
       } catch (error) {
         console.error("Error fetching destinations:", error);
       } finally {
         setLoading(false);
       }
-    };
+  };
+
+  useEffect(() => {
     fetchDestinations();
   }, []);
+
+  const handleAddDestination = async () => {
+    if (!newDest.name || !newDest.country) return;
+    try {
+      const newDocRef = doc(collection(db, 'destinations'));
+      const destToAdd = {
+        ...newDest,
+        id: newDocRef.id,
+        events: newDest.events || []
+      };
+      await setDoc(newDocRef, destToAdd);
+      setIsAddModalOpen(false);
+      setNewDest({ name: '', country: '', description: '', featured: false, visitors: 0, rating: 5.0, image: '', events: [] });
+      fetchDestinations();
+    } catch (error) {
+      console.error("Error adding destination:", error);
+    }
+  };
 
   const filtered = destinations.filter(d =>
     d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,7 +88,7 @@ export default function AdminDestinations() {
           <h1 className="text-2xl lg:text-3xl font-bold text-white">Destinations & Events</h1>
           <p className="text-slate-400 mt-1">Manage destinations and view events for selected places.</p>
         </div>
-        <button className="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-600 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+        <button onClick={() => setIsAddModalOpen(true)} className="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-600 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20">
           <Plus className="w-4 h-4" /> Add Destination
         </button>
       </div>
@@ -224,6 +207,55 @@ export default function AdminDestinations() {
           )}
         </div>
       </div>
+
+      {/* Add Destination Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)} />
+          <div className="relative bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-white mb-4">Add New Destination</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Name</label>
+                  <input type="text" value={newDest.name} onChange={e => setNewDest({...newDest, name: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-cyan-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Country</label>
+                  <input type="text" value={newDest.country} onChange={e => setNewDest({...newDest, country: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-cyan-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Image URL</label>
+                <input type="text" value={newDest.image} onChange={e => setNewDest({...newDest, image: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-cyan-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Description</label>
+                <textarea value={newDest.description} onChange={e => setNewDest({...newDest, description: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-cyan-500 min-h-[80px]" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Visitors</label>
+                  <input type="number" value={newDest.visitors} onChange={e => setNewDest({...newDest, visitors: parseInt(e.target.value) || 0})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-cyan-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Rating</label>
+                  <input type="number" step="0.1" value={newDest.rating} onChange={e => setNewDest({...newDest, rating: parseFloat(e.target.value) || 0})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-cyan-500" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <input type="checkbox" id="featured" checked={newDest.featured} onChange={e => setNewDest({...newDest, featured: e.target.checked})} className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900" />
+                <label htmlFor="featured" className="text-sm font-medium text-slate-400">Featured Destination</label>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-800">
+                <button onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-700 transition-all">Cancel</button>
+                <button onClick={handleAddDestination} className="px-4 py-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-600 transition-all shadow-lg shadow-cyan-500/20">Save Destination</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

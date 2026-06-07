@@ -19,7 +19,7 @@ export default function Header() {
           <div className="flex-shrink-0 flex items-center gap-2">
             <Compass className="w-8 h-8 text-[#65a30d]" />
             <Link to="/" className="text-2xl font-bold text-[#4d7c0f]">
-              Traveloop
+              FunctionalTrazz
             </Link>
           </div>
 
@@ -61,12 +61,7 @@ export default function Header() {
             >
               Profile
             </Link>
-            <Link 
-              to="/admin" 
-              className={`${isActive('/admin') ? 'text-[#4d7c0f] font-semibold border-b-2 border-[#4d7c0f]' : 'text-gray-500 hover:text-[#4d7c0f] font-medium'} pb-1 transition-colors`}
-            >
-              Admin
-            </Link>
+
           </nav>
 
           {/* Actions */}
@@ -84,9 +79,18 @@ export default function Header() {
             <div className="hidden sm:flex items-center space-x-3">
               {currentUser ? (
                 <>
-                  <span className="text-gray-600 font-medium">
-                    {currentUser.email}
-                  </span>
+                  {currentUser.photoURL ? (
+                    <img 
+                      src={currentUser.photoURL} 
+                      alt="Profile" 
+                      className="w-8 h-8 rounded-full border border-gray-200 object-cover"
+                      title={currentUser.email || ''}
+                    />
+                  ) : (
+                    <span className="text-gray-600 font-medium">
+                      {currentUser.email}
+                    </span>
+                  )}
                   <button
                     onClick={logout}
                     className="px-5 py-2.5 border-2 border-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-50 transition-colors"

@@ -20,16 +20,7 @@ interface UserData {
   avatar: string;
 }
 
-const mockUsers: UserData[] = [
-  { id: '1', name: 'Sarah Chen', email: 'sarah.chen@email.com', city: 'San Francisco', country: 'USA', joinDate: '2025-12-04', status: 'active', role: 'user', trips: 12, avatar: 'SC' },
-  { id: '2', name: 'Alex Morgan', email: 'alex.morgan@email.com', city: 'London', country: 'UK', joinDate: '2026-01-15', status: 'active', role: 'admin', trips: 8, avatar: 'AM' },
-  { id: '3', name: 'James Wilson', email: 'james.w@email.com', city: 'Sydney', country: 'Australia', joinDate: '2026-02-20', status: 'suspended', role: 'user', trips: 3, avatar: 'JW' },
-  { id: '4', name: 'Maria Garcia', email: 'maria.g@email.com', city: 'Madrid', country: 'Spain', joinDate: '2026-03-08', status: 'active', role: 'user', trips: 15, avatar: 'MG' },
-  { id: '5', name: 'David Lee', email: 'david.lee@email.com', city: 'Seoul', country: 'South Korea', joinDate: '2026-01-30', status: 'active', role: 'user', trips: 6, avatar: 'DL' },
-  { id: '6', name: 'Emma Brown', email: 'emma.b@email.com', city: 'Toronto', country: 'Canada', joinDate: '2026-04-12', status: 'active', role: 'user', trips: 2, avatar: 'EB' },
-  { id: '7', name: 'Raj Patel', email: 'raj.patel@email.com', city: 'Mumbai', country: 'India', joinDate: '2026-02-28', status: 'active', role: 'user', trips: 9, avatar: 'RP' },
-  { id: '8', name: 'Lisa Tanaka', email: 'lisa.t@email.com', city: 'Tokyo', country: 'Japan', joinDate: '2026-03-22', status: 'suspended', role: 'user', trips: 0, avatar: 'LT' },
-];
+
 
 export default function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,6 +28,10 @@ export default function AdminUsers() {
   const [filter, setFilter] = useState<'all' | 'active' | 'suspended'>('all');
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newUser, setNewUser] = useState<Partial<UserData>>({
+    name: '', email: '', city: '', country: '', role: 'user', status: 'active', trips: 0, avatar: ''
+  });
 
   const fetchUsers = async () => {
     try {
@@ -46,19 +41,10 @@ export default function AdminUsers() {
         fetchedUsers.push({ id: docSnap.id, ...docSnap.data() } as UserData);
       });
       
-      if (fetchedUsers.length === 0) {
-        // Auto-seed mock data
-        for (const user of mockUsers) {
-          await setDoc(doc(db, 'users', user.id), user);
-        }
-        setUsers(mockUsers);
-      } else {
-        setUsers(fetchedUsers);
-      }
+      setUsers(fetchedUsers);
     } catch (err) {
       console.error("Failed to fetch users:", err);
-      // Fallback to mock data if Firebase fails
-      setUsers(mockUsers);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -91,6 +77,25 @@ export default function AdminUsers() {
     }
   };
 
+  const handleAddUser = async () => {
+    if (!newUser.name || !newUser.email) return;
+    try {
+      const newDocRef = doc(collection(db, 'users'));
+      const userToAdd = {
+        ...newUser,
+        id: newDocRef.id,
+        joinDate: new Date().toISOString(),
+        avatar: newUser.avatar || newUser.name.charAt(0).toUpperCase()
+      };
+      await setDoc(newDocRef, userToAdd);
+      setIsAddModalOpen(false);
+      setNewUser({ name: '', email: '', city: '', country: '', role: 'user', status: 'active', trips: 0, avatar: '' });
+      fetchUsers();
+    } catch (err) {
+      console.error("Error adding user:", err);
+    }
+  };
+
   const filtered = users.filter((u) => {
     const matchesSearch = (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -107,7 +112,7 @@ export default function AdminUsers() {
           <h1 className="text-2xl lg:text-3xl font-bold text-white">User Management</h1>
           <p className="text-slate-400 mt-1">Manage all platform users, roles, and permissions.</p>
         </div>
-        <button className="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-600 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+        <button onClick={() => setIsAddModalOpen(true)} className="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-600 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20">
           <Plus className="w-4 h-4" /> Add User
         </button>
       </div>
@@ -326,6 +331,40 @@ export default function AdminUsers() {
               <button onClick={() => handleDeleteUser(selectedUser.id)} className="flex-1 py-2.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 text-sm font-semibold hover:bg-red-500/20 transition-all flex items-center justify-center gap-2">
                 <Trash2 className="w-4 h-4" /> Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add User Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)} />
+          <div className="relative bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-4">Add New User</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Name</label>
+                <input type="text" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-cyan-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Email</label>
+                <input type="email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-cyan-500" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">City</label>
+                  <input type="text" value={newUser.city} onChange={e => setNewUser({...newUser, city: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-cyan-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Country</label>
+                  <input type="text" value={newUser.country} onChange={e => setNewUser({...newUser, country: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white outline-none focus:border-cyan-500" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-700 transition-all">Cancel</button>
+                <button onClick={handleAddUser} className="px-4 py-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-600 transition-all shadow-lg shadow-cyan-500/20">Save User</button>
+              </div>
             </div>
           </div>
         </div>

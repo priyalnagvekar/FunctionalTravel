@@ -24,9 +24,11 @@ import ExpenseInvoice from './pages/ExpenseInvoice';
 import Community from './pages/Community';
 import CitySearch from './pages/CitySearch';
 import SharedItinerary from './pages/SharedItinerary';
+import Budget from './pages/Budget';
 
 // Admin Pages
 import AdminOverview from './pages/admin/AdminOverview';
+import AdminLogin from './pages/admin/AdminLogin';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminTrips from './pages/admin/AdminTrips';
 import AdminActivities from './pages/admin/AdminActivities';
@@ -42,6 +44,7 @@ export default function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
 
           {/* Public Shared Itinerary (no auth, no layout) */}
           <Route path="/shared/:itineraryId" element={<SharedItinerary />} />
@@ -65,6 +68,7 @@ export default function App() {
               <Route path="/timeline" element={<TripTimeline />} />
               <Route path="/invoice" element={<ExpenseInvoice />} />
               <Route path="/city-search" element={<CitySearch />} />
+              <Route path="/budget" element={<Budget />} />
             </Route>
           </Route>
 

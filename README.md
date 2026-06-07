@@ -1,49 +1,21 @@
-# Traveloop
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-Traveloop is a comprehensive, full-stack travel planning and management platform designed to help users explore destinations, build robust itineraries, and manage their trips effortlessly.
+# Run and deploy your AI Studio app
 
-## Features
+This contains everything you need to run your app locally.
 
-- **Interactive Dashboards**: Advanced administrative and user dashboards.
-- **Dynamic Trip Planning**: Filter cities by region and budget, add to itineraries.
-- **Real-time Data Sync**: Powered by Firebase Firestore for robust cloud synchronization.
-- **Authentication**: Secure user login with Firebase Authentication.
-- **Modern UI/UX**: Built with React, Tailwind CSS, and Lucide Icons for a beautiful, responsive experience.
+View your app in AI Studio: https://ai.studio/apps/ca2af27c-ae9d-4949-9147-0db58cbf6239
 
-## Getting Started
+## Run Locally
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) installed
-- A Firebase project with Firestore and Authentication enabled
+**Prerequisites:**  Node.js
 
-### Setup
 
-1. **Clone the repository**:
-   ```bash
-   git clone <repository_url>
-   cd FuntionalTraval
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Environment Configuration**:
-   Ensure you have a `.env` file in the root directory with your Firebase configuration. You can use `.env.example` as a template.
-
-4. **Run the Application**:
-   Start the frontend:
-   ```bash
-   npm run dev
-   ```
-   Start the backend (in a separate terminal):
-   ```bash
-   npm run dev:backend
-   ```
-
-### Technologies Used
-
-- **Frontend**: React, Vite, Tailwind CSS, React Router
-- **Backend**: Node.js, Express, Firebase Admin SDK
-- **Database**: Firebase Firestore
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
+"# dsfsdfs" 

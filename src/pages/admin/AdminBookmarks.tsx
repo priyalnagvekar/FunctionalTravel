@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Search, Trash2, ExternalLink, Heart, MapPin, Calendar, DollarSign } from 'lucide-react';
-
+import React, { useState, useEffect } from 'react';
+import { Search, Trash2, ExternalLink, Heart, MapPin, Calendar, DollarSign, Loader2 } from 'lucide-react';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 interface BookmarkItem {
   id: string;
   user: string;
@@ -13,19 +14,34 @@ interface BookmarkItem {
   avatar: string;
 }
 
-const mockBookmarks: BookmarkItem[] = [
-  { id: '1', user: 'Sarah Chen', userEmail: 'sarah@email.com', tripTitle: 'Romantic Paris Getaway', destination: 'Paris, France', savedDate: '2026-05-08', price: '$2,500', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=300', avatar: 'SC' },
-  { id: '2', user: 'Alex Morgan', userEmail: 'alex@email.com', tripTitle: 'Tokyo Cultural Immersion', destination: 'Tokyo, Japan', savedDate: '2026-05-07', price: '$3,800', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=300', avatar: 'AM' },
-  { id: '3', user: 'Maria Garcia', userEmail: 'maria@email.com', tripTitle: 'Bali Wellness Retreat', destination: 'Bali, Indonesia', savedDate: '2026-05-06', price: '$1,800', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=300', avatar: 'MG' },
-  { id: '4', user: 'David Lee', userEmail: 'david@email.com', tripTitle: 'Swiss Alps Adventure', destination: 'Switzerland', savedDate: '2026-05-05', price: '$4,100', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=300', avatar: 'DL' },
-  { id: '5', user: 'Emma Brown', userEmail: 'emma@email.com', tripTitle: 'Santorini Romance', destination: 'Santorini, Greece', savedDate: '2026-05-04', price: '$3,200', image: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&q=80&w=300', avatar: 'EB' },
-  { id: '6', user: 'Raj Patel', userEmail: 'raj@email.com', tripTitle: 'Maldives Paradise', destination: 'Maldives', savedDate: '2026-05-03', price: '$5,500', image: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&q=80&w=300', avatar: 'RP' },
-];
+
 
 export default function AdminBookmarks() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = mockBookmarks.filter(b =>
+  useEffect(() => {
+    const fetchBookmarks = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'bookmarks'));
+        const fetched: BookmarkItem[] = [];
+        querySnapshot.forEach((docSnap) => {
+          fetched.push({ id: docSnap.id, ...docSnap.data() } as BookmarkItem);
+        });
+        
+        setBookmarks(fetched);
+      } catch (err) {
+        console.error("Failed to fetch bookmarks:", err);
+        setBookmarks([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookmarks();
+  }, []);
+
+  const filtered = bookmarks.filter(b =>
     b.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.tripTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.destination.toLowerCase().includes(searchTerm.toLowerCase())
@@ -47,7 +63,7 @@ export default function AdminBookmarks() {
         </div>
         <div className="flex items-center gap-3 text-sm text-slate-400">
           <Heart className="w-4 h-4 text-red-400 fill-red-400" />
-          <span><strong className="text-white">{mockBookmarks.length}</strong> total saves</span>
+          <span><strong className="text-white">{bookmarks.length}</strong> total saves</span>
         </div>
       </div>
 
@@ -60,7 +76,15 @@ export default function AdminBookmarks() {
 
       {/* Grouped Bookmarks */}
       <div className="space-y-6">
-        {Object.entries(grouped).map(([user, items]) => (
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+          </div>
+        ) : Object.keys(grouped).length === 0 ? (
+          <div className="text-center text-slate-500 py-8">
+            No bookmarks found.
+          </div>
+        ) : Object.entries(grouped).map(([user, items]) => (
           <div key={user} className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-800 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border border-slate-700 flex items-center justify-center text-xs font-bold text-cyan-400">
